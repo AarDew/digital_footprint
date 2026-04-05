@@ -1,60 +1,177 @@
-import { BookOpen, Shield, Lock, AlertTriangle, Eye, Server } from "lucide-react";
+"use client";
+
+import { useState, useEffect } from "react";
+import { useSearchParams, useParams } from "next/navigation";
+import { BookOpen, Shield, AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
 
 export default function LearnPage() {
-  const topics = [
-    { title: "Understanding Phishing", category: "Social Engineering", icon: AlertTriangle, color: "text-rose-400", time: "5 min read" },
-    { title: "Securing Digital Identity", category: "Privacy", icon: Eye, color: "text-blue-400", time: "8 min read" },
-    { title: "Malware Analysis Basics", category: "Threat Detection", icon: Server, color: "text-indigo-400", time: "12 min read" },
-    { title: "Password Best Practices", category: "Access Control", icon: Lock, color: "text-emerald-400", time: "4 min read" },
-    { title: "Zero Trust Architecture", category: "Advanced Systems", icon: Shield, color: "text-purple-400", time: "15 min read" },
-  ];
+  const searchParams = useSearchParams();
+  const params = useParams();
+  
+  let routeTopic = params && params.topic ? decodeURIComponent(params.topic) : null;
+  if (routeTopic) {
+    // Format parameters like "password-security" -> "Password Security"
+    routeTopic = routeTopic.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }
+  
+  const categoryParam = routeTopic || searchParams.get("category") || "Phishing";
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch(`/api/learn/content?category=${encodeURIComponent(categoryParam)}`);
+        
+        if (!res.ok) {
+          throw new Error("Failed to fetch learn content");
+        }
+        
+        const json = await res.json();
+        setData(json);
+      } catch (err) {
+        setError(err.message || "An unexpected error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [categoryParam]);
+
+  const handleQuizSelect = (questionIdx, option) => {
+    setSelectedAnswers(prev => ({ ...prev, [questionIdx]: option }));
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
+        <h2 className="text-xl font-semibold text-white">Loading content...</h2>
+        <p className="text-gray-400 mt-2">Fetching secure data securely.</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="p-4 bg-rose-500/10 rounded-full mb-4">
+          <AlertTriangle className="w-12 h-12 text-rose-500" />
+        </div>
+        <h2 className="text-xl font-bold text-white mb-2">Error Loading Content</h2>
+        <p className="text-rose-400 font-medium">{error}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-6 px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors border border-gray-700"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  if (!data) return null;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="flex items-center gap-4 mb-10">
-        <div className="p-3 bg-gray-800 rounded-xl">
+        <div className="p-3 bg-gray-800 rounded-xl shadow-lg shadow-gray-900/50">
           <BookOpen className="w-8 h-8 text-white" />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-white">Learning Center</h1>
-          <p className="text-gray-400">Master cybersecurity concepts and protect your digital footprint.</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight">{data.title || `${categoryParam} Overview`}</h1>
+          <p className="text-gray-400 mt-1">Master cybersecurity concepts and protect your digital footprint.</p>
         </div>
       </div>
 
-      <div className="mb-12">
-        <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-900 border border-gray-800 group cursor-pointer flex items-center justify-center group">
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
-          <p className="text-gray-500 absolute z-0">[Placeholder Video]</p>
-          <div className="absolute inset-0 flex items-center justify-center z-20">
-            <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-              <div className="w-0 h-0 border-t-8 border-t-transparent border-l-[16px] border-l-white border-b-8 border-b-transparent ml-1" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+        <div className="lg:col-span-2 relative p-8 rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-950/40 via-slate-900/80 to-black border border-gray-800 shadow-2xl">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-500/10 via-transparent to-transparent z-0" />
+          <div className="relative z-20">
+            <span className="px-3 py-1.5 bg-indigo-500/20 text-indigo-300 text-xs font-semibold rounded-md mb-4 inline-block border border-indigo-500/30">Article</span>
+            <div className="prose prose-invert max-w-none text-gray-300 space-y-4">
+              {data.article ? (
+                // Simple rendering assuming article might be plain text or HTML; here we treat it as paragraph strings if array, or simply render text.
+                Array.isArray(data.article) ? data.article.map((p, i) => <p key={i} className="leading-relaxed">{p}</p>) : <div dangerouslySetInnerHTML={{ __html: data.article }} />
+              ) : (
+                <p>No article content available.</p>
+              )}
             </div>
           </div>
-          <div className="absolute bottom-6 left-6 z-20">
-            <span className="px-2 py-1 bg-indigo-500/20 text-indigo-300 text-xs font-semibold rounded mb-2 inline-block">Featured Tutorial</span>
-            <h2 className="text-2xl font-bold text-white mb-2">Introduction to Threat Intelligence</h2>
-            <p className="text-gray-300 max-w-xl">Learn how the professionals track, analyze, and neutralize potential cyber threats before they impact systems.</p>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <h2 className="text-xl font-semibold text-white">Key Takeaways</h2>
+          <div className="flex flex-col gap-3">
+            {data.keyTakeaways && data.keyTakeaways.length > 0 ? (
+              data.keyTakeaways.map((takeaway, idx) => (
+                <div key={idx} className="flex items-start gap-4 p-4 rounded-xl border border-gray-800 bg-emerald-900/10 hover:bg-emerald-900/20 hover:border-emerald-700/50 transition-all">
+                  <div className="p-1 rounded-full bg-emerald-500/20 mt-1 shrink-0">
+                    <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-200 leading-relaxed">{takeaway}</p>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500">No key takeaways found.</p>
+            )}
           </div>
         </div>
       </div>
 
-      <h2 className="text-2xl font-bold text-white mb-6">Latest Articles</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {topics.map((topic, idx) => (
-          <div key={idx} className="bg-gray-900 border border-gray-800 rounded-xl p-6 hover:border-gray-600 transition-colors cursor-pointer group">
-            <div className="flex justify-between items-start mb-4">
-              <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center group-hover:bg-gray-700 transition-colors">
-                <topic.icon className={`w-5 h-5 ${topic.color}`} />
+      <div className="flex items-center gap-2 mb-6 mt-16">
+        <Shield className="w-6 h-6 text-indigo-400" />
+        <h2 className="text-2xl font-bold text-white">Knowledge Check</h2>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {data.quiz && data.quiz.length > 0 ? (
+          data.quiz.map((qItem, idx) => (
+            <div key={idx} className="bg-gray-900/40 backdrop-blur-sm border border-gray-800 rounded-xl p-6 shadow-lg shadow-black/20">
+              <h3 className="text-lg font-bold text-white mb-4"><span className="text-indigo-400 mr-2">Q{idx + 1}.</span>{qItem.question}</h3>
+              <div className="space-y-3">
+                {qItem.options && qItem.options.map((option, optIdx) => {
+                  const isSelected = selectedAnswers[idx] === option;
+                  // If we want to show correct/incorrect after selection (assuming API provides 'answer')
+                  const isAnswered = selectedAnswers[idx] !== undefined;
+                  const isCorrect = qItem.answer && option === qItem.answer;
+                  let optionClass = "border-gray-700 hover:border-indigo-500 hover:bg-indigo-900/20 text-gray-300";
+                  
+                  if (isSelected) {
+                    if (qItem.answer) {
+                      optionClass = isCorrect 
+                        ? "border-emerald-500 bg-emerald-500/20 text-emerald-300"
+                        : "border-rose-500 bg-rose-500/20 text-rose-300";
+                    } else {
+                      optionClass = "border-indigo-500 bg-indigo-500/20 text-indigo-300";
+                    }
+                  } else if (isAnswered && isCorrect) {
+                     optionClass = "border-emerald-500 bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500 delay-100";
+                  }
+
+                  return (
+                    <button
+                      key={optIdx}
+                      onClick={() => !isAnswered && handleQuizSelect(idx, option)}
+                      disabled={isAnswered}
+                      className={`w-full text-left px-4 py-3 rounded-lg border text-sm font-medium transition-all ${optionClass}`}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
               </div>
-              <span className="text-xs font-medium text-gray-500">{topic.time}</span>
             </div>
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{topic.category}</span>
-            <h3 className="text-lg font-bold text-white mt-1 group-hover:text-indigo-400 transition-colors">{topic.title}</h3>
-            <p className="text-sm text-gray-400 mt-3 line-clamp-2">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-            </p>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p className="text-gray-500">No quiz available for this category.</p>
+        )}
       </div>
     </div>
   );
