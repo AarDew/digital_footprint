@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useParams, useRouter } from "next/navigation";
 import { BookOpen, Shield, AlertTriangle, CheckCircle, Loader2, PlayCircle } from "lucide-react";
+import VideoCard from "@/components/VideoCard";
 
 const TOPICS = [
   { id: "phishing", name: "Phishing" },
@@ -192,19 +193,13 @@ export default function LearnPage() {
             {!videosLoading && !videosError && videos.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {videos.map((vid, idx) => (
-                  <a key={idx} href={`https://www.youtube.com/watch?v=${vid.videoId}`} target="_blank" rel="noreferrer" className="group flex flex-col gap-3 bg-gray-900/40 backdrop-blur-sm border border-gray-800 rounded-xl overflow-hidden hover:border-gray-600 transition-all duration-300 shadow-md">
-                    <div className="w-full aspect-video overflow-hidden relative border-b border-gray-800">
-                      <img src={vid.thumbnail} alt={vid.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-300" />
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <PlayCircle className="w-12 h-12 text-white drop-shadow-lg" />
-                      </div>
-                    </div>
-                    <div className="px-4 pb-4">
-                      <h3 className="text-sm font-bold text-white line-clamp-2 leading-snug group-hover:text-indigo-400 transition-colors" title={vid.title}>{vid.title}</h3>
-                      <p className="text-xs text-gray-400 mt-2 font-medium">{vid.channelTitle}</p>
-                    </div>
-                  </a>
+                  <VideoCard 
+                    key={idx}
+                    title={vid.title}
+                    videoId={vid.videoId}
+                    thumbnail={vid.thumbnail}
+                    channelTitle={vid.channelTitle}
+                  />
                 ))}
               </div>
             )}
