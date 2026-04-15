@@ -176,22 +176,33 @@ export default function LearnPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mb-6 mt-16">
-            <PlayCircle className="w-6 h-6 text-rose-500" />
-            <h2 className="text-2xl font-bold text-white">Recommended Videos</h2>
-          </div>
-          
-          <div className="mb-12">
+          {/* Video Section */}
+          <div className="mt-24 mb-12 pt-16 border-t border-gray-800/80">
+            <div className="flex items-center gap-3 mb-10">
+              <h2 className="text-3xl font-bold text-white tracking-tight">
+                🎥 Recommended Learning Videos
+              </h2>
+            </div>
             {videosLoading && (
-              <div className="flex items-center justify-center py-10">
-                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                {[1, 2, 3].map((val) => (
+                  <div key={val} className="flex flex-col gap-3 bg-gray-900/40 rounded-xl overflow-hidden border border-gray-800 shadow-md">
+                    <div className="w-full aspect-video bg-gray-800/60 animate-pulse border-b border-gray-800"></div>
+                    <div className="px-4 pb-4 pt-1 flex flex-col gap-3">
+                      <div className="h-4 bg-gray-800/60 rounded animate-pulse w-5/6 mt-1"></div>
+                      <div className="h-3 bg-gray-800/60 rounded animate-pulse w-2/3"></div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
             {videosError && !videosLoading && (
-              <p className="text-rose-400 text-sm">{videosError}</p>
+              <div className="py-8 px-6 bg-gray-900/40 border border-gray-800 rounded-xl text-center">
+                <p className="text-gray-400 font-medium">Videos unavailable, please try again later</p>
+              </div>
             )}
             {!videosLoading && !videosError && videos.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 {videos.map((vid, idx) => (
                   <VideoCard 
                     key={idx}
