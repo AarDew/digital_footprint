@@ -18,7 +18,7 @@ export function ResultCard({ result }) {
     riskLevel === "Low" ? ShieldCheck : Shield;
 
   return (
-    <div className="glass-card rounded-2xl p-8 relative overflow-hidden group">
+    <div className="glass-card rounded-2xl p-8 relative overflow-hidden group animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Background glow based on risk */}
       <div className={cn(
         "absolute -top-24 -right-24 w-48 h-48 rounded-full blur-3xl opacity-20 pointer-events-none",

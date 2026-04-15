@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { scanEmail } from "@/lib/api";
 import { ResultCard } from "@/components/ResultCard";
+import { ResultSkeleton } from "@/components/ResultSkeleton";
 import { Mail, Search, Loader2 } from "lucide-react";
 
 export default function EmailScanner() {
@@ -57,7 +58,7 @@ export default function EmailScanner() {
         </div>
       </form>
 
-      {result && <ResultCard result={result} />}
+      {loading ? <ResultSkeleton /> : result && <ResultCard result={result} />}
     </div>
   );
 }

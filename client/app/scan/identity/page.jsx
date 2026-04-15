@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { scanIdentity } from "@/lib/api";
 import { ResultCard } from "@/components/ResultCard";
+import { ResultSkeleton } from "@/components/ResultSkeleton";
 import { User, Search, Loader2 } from "lucide-react";
 
 export default function IdentityScanner() {
@@ -59,7 +60,7 @@ export default function IdentityScanner() {
         </div>
       </form>
 
-      {result && <ResultCard result={result} />}
+      {loading ? <ResultSkeleton /> : result && <ResultCard result={result} />}
     </div>
   );
 }
