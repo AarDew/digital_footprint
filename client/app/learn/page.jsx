@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useParams, useRouter } from "next/navigation";
-import { BookOpen, Shield, AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
+import { BookOpen, Shield, AlertTriangle, CheckCircle, Loader2, PlayCircle } from "lucide-react";
 
 const TOPICS = [
   { id: "phishing", name: "Phishing" },
@@ -30,6 +30,27 @@ export default function LearnPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedAnswers, setSelectedAnswers] = useState({});
+  const [videos, setVideos] = useState([]);
+  const [videosLoading, setVideosLoading] = useState(true);
+  const [videosError, setVideosError] = useState(null);
+
+  useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        setVideosLoading(true);
+        setVideosError(null);
+        const res = await fetch("/api/learn/videos?topic=" + encodeURIComponent(activeTopic));
+        if (!res.ok) throw new Error("Failed to fetch videos");
+        const json = await res.json();
+        setVideos(json);
+      } catch (err) {
+        setVideosError(err.message || "An unexpected error occurred");
+      } finally {
+        setVideosLoading(false);
+      }
+    };
+    fetchVideos();
+  }, [activeTopic]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -152,6 +173,44 @@ export default function LearnPage() {
                 )}
               </div>
             </div>
+          </div>
+
+          <div className="flex items-center gap-2 mb-6 mt-16">
+            <PlayCircle className="w-6 h-6 text-rose-500" />
+            <h2 className="text-2xl font-bold text-white">Recommended Videos</h2>
+          </div>
+          
+          <div className="mb-12">
+            {videosLoading && (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+              </div>
+            )}
+            {videosError && !videosLoading && (
+              <p className="text-rose-400 text-sm">{videosError}</p>
+            )}
+            {!videosLoading && !videosError && videos.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {videos.map((vid, idx) => (
+                  <a key={idx} href={`https://www.youtube.com/watch?v=${vid.videoId}`} target="_blank" rel="noreferrer" className="group flex flex-col gap-3 bg-gray-900/40 backdrop-blur-sm border border-gray-800 rounded-xl overflow-hidden hover:border-gray-600 transition-all duration-300 shadow-md">
+                    <div className="w-full aspect-video overflow-hidden relative border-b border-gray-800">
+                      <img src={vid.thumbnail} alt={vid.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-300" />
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <PlayCircle className="w-12 h-12 text-white drop-shadow-lg" />
+                      </div>
+                    </div>
+                    <div className="px-4 pb-4">
+                      <h3 className="text-sm font-bold text-white line-clamp-2 leading-snug group-hover:text-indigo-400 transition-colors" title={vid.title}>{vid.title}</h3>
+                      <p className="text-xs text-gray-400 mt-2 font-medium">{vid.channelTitle}</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            )}
+            {!videosLoading && !videosError && videos.length === 0 && (
+              <p className="text-gray-500">No videos found for this topic.</p>
+            )}
           </div>
 
           <div className="flex items-center gap-2 mb-6 mt-16">
