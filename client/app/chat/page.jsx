@@ -10,7 +10,7 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!input.trim()) return;
 
@@ -19,14 +19,30 @@ export default function ChatPage() {
     setInput("");
     setIsTyping(true);
 
-    // Mock response
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: userMessage.content }),
+      });
+
+      const data = await response.json();
+
       setMessages(prev => [
         ...prev, 
-        { role: 'assistant', content: `I have analyzed your query regarding "${userMessage.content}". Based on security patterns, it's recommended to err on the side of caution. Would you like me to scan a specific URL or file regarding this?` }
+        { role: 'assistant', content: data.reply || "Something went wrong." }
       ]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setMessages(prev => [
+        ...prev, 
+        { role: 'assistant', content: "Something went wrong. Please try again." }
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -50,7 +66,31 @@ export default function ChatPage() {
             <div className={`p-4 rounded-2xl max-w-[80%] ${
               msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-sm' : 'bg-gray-900 border border-gray-800 text-gray-200 rounded-tl-sm'
             }`}>
-              <p className="text-sm md:text-base">{msg.content}</p>
+              <div className="text-sm md:text-base leading-relaxed text-gray-200">
+                {msg.content.split('\n').map((line, i) => {
+                  if (!line.trim()) return <div key={i} className="h-2" />;
+                  
+                  // Parse headers
+                  if (line.startsWith('### ')) {
+                    return <h3 key={i} className="text-lg font-bold text-indigo-400 mt-4 mb-2">{line.replace('### ', '')}</h3>;
+                  }
+                  
+                  // Parse bold text
+                  const parts = line.split(/(\*\*.*?\*\*)/g).map((part, j) => {
+                    if (part.startsWith('**') && part.endsWith('**')) {
+                      return <strong key={j} className="font-semibold text-white">{part.slice(2, -2)}</strong>;
+                    }
+                    return part;
+                  });
+
+                  return (
+                    <div key={i} className="mb-2 last:mb-0 flex items-start">
+                       {line.trim().startsWith('* ') ? <span className="mr-2 mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></span> : null}
+                       <span>{parts.map((p, x) => typeof p === 'string' && p.startsWith('* ') ? p.substring(2) : p)}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         ))}
